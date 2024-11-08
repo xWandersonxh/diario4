@@ -1,5 +1,5 @@
 // Senhas para o líder e para os alunos
-const leaderPassword = "wand123"; // Senha do líder de sala
+const leaderPassword = "wand123"; // Nova senha do líder de sala
 const studentPassword = "aluno123"; // Senha dos alunos
 
 // Variável para verificar o tipo de usuário
@@ -36,7 +36,7 @@ function addActivity() {
 
     const activityInput = document.getElementById("activity");
     const dueDateInput = document.getElementById("dueDate");
-
+    
     const activityText = activityInput.value;
     const dueDate = dueDateInput.value;
 
@@ -47,7 +47,7 @@ function addActivity() {
 
     const activityItem = {
         text: activityText,
-        dueDate: dueDate
+        dueDate: formatDate(dueDate)
     };
 
     // Salva a atividade no localStorage
@@ -114,4 +114,10 @@ function removeActivity(activityText) {
     let activities = JSON.parse(localStorage.getItem("activities")) || [];
     activities = activities.filter(activity => activity.text !== activityText);
     localStorage.setItem("activities", JSON.stringify(activities));
+}
+
+// Função para formatar a data para o formato brasileiro (dia/mês/ano)
+function formatDate(dateString) {
+    const [year, month, day] = dateString.split("-"); // Separa ano, mês e dia
+    return `${day}/${month}/${year}`; // Retorna no formato dd/mm/yyyy
 }
