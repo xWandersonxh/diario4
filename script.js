@@ -105,6 +105,9 @@ function saveActivity(activityItem) {
 
 // Função para carregar atividades do localStorage e exibi-las na interface
 function loadActivities() {
+    const activityList = document.getElementById("activityList");
+    activityList.innerHTML = ""; // Limpa a lista antes de carregar para evitar duplicações
+
     const activities = JSON.parse(localStorage.getItem("activities")) || [];
     activities.forEach(activityItem => displayActivity(activityItem));
 }
@@ -121,3 +124,6 @@ function formatDate(dateString) {
     const [year, month, day] = dateString.split("-"); // Separa ano, mês e dia
     return `${day}/${month}/${year}`; // Retorna no formato dd/mm/yyyy
 }
+
+// Carrega as atividades ao carregar a página
+window.onload = loadActivities;
