@@ -1,31 +1,122 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diário Eletrônico</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Agenda Compartilhada com GitHub</title>
 </head>
 <body>
-    <div class="container">
-        <h1>Diário Eletrônico Da 101</h1>
-
-        <!-- Formulário de Login -->
-        <div id="login-section">
-            <input type="password" id="password" placeholder="Digite sua senha" required>
-            <button onclick="login()">Entrar</button>
-        </div>
-
-        <!-- Seção de Entrada de Atividade -->
-        <div class="input-section" id="input-section" style="display: none;">
-            <input type="text" id="activity" placeholder="Atividade" required>
-            <input type="date" id="dueDate" required>
-            <button onclick="addActivity()">Adicionar Atividade</button>
-        </div>
-
-        <h2>Atividades</h2>
-        <ul id="activityList"></ul>
+    <div id="login-section">
+        <input type="password" id="token" placeholder="Insira seu token GitHub">
+        <button onclick="login()">Entrar</button>
     </div>
-    <script src="script.js"></script>
+    <div id="input-section" style="display: none;">
+        <h3>Adicionar Atividade</h3>
+        <input type="text" id="activity" placeholder="Descrição da Atividade">
+        <input type="date" id="dueDate">
+        <button onclick="addActivity()">Adicionar Atividade</button>
+    </div>
+    <h3>Lista de Atividades</h3>
+    <ul id="activityList"></ul>
+
+    <script>
+        const username = "seu-usuario"; // Nome de usuário do GitHub
+        const repo = "agenda-compartilhada"; // Nome do repositório
+        const filePath = "activities.json"; // Caminho do arquivo JSON
+        let token = ""; // Token do GitHub
+
+        function login() {
+            token = document.getElementById("token").value;
+            document.getElementById("login-section").style.display = "none";
+            document.getElementById("input-section").style.display = "block";
+            loadActivities();
+        }
+
+        async function loadActivities() {
+            const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${filePath}`, {
+                headers: {
+                    Authorization: `token ${token}`
+                }
+            });
+            const data = await response.json();
+            const activities = JSON.parse(atob(data.content));
+            displayActivities(activities);
+        }
+
+        async function addActivity() {
+            const activityInput = document.getElementById("activity");
+            const dueDateInput = document.getElementById("dueDate");
+
+            const activityText = activityInput.value;
+            const dueDate = dueDateInput.value;
+
+            if (activityText === "" || dueDate === "") {
+                alert("Por favor, preencha todos os campos!");
+                return;
+            }
+
+            const activityItem = {
+                text: activityText,
+                dueDate: formatDate(dueDate)
+            };
+
+            const activities = await getActivities();
+            activities.push(activityItem);
+            await saveActivities(activities);
+            displayActivities(activities);
+
+            activityInput.value = "";
+            dueDateInput.value = "";
+        }
+
+        async function getActivities() {
+            const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${filePath}`, {
+                headers: {
+                    Authorization: `token ${token}`
+                }
+            });
+            const data = await response.json();
+            return JSON.parse(atob(data.content));
+        }
+
+        async function saveActivities(activities) {
+            const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${filePath}`, {
+                method: "PUT",
+                headers: {
+                    Authorization: `token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Atualizando atividades",
+                    content: btoa(JSON.stringify(activities)),
+                    sha: await getFileSha()
+                })
+            });
+        }
+
+        async function getFileSha() {
+            const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${filePath}`, {
+                headers: {
+                    Authorization: `token ${token}`
+                }
+            });
+            const data = await response.json();
+            return data.sha;
+        }
+
+        function displayActivities(activities) {
+            const activityList = document.getElementById("activityList");
+            activityList.innerHTML = "";
+            activities.forEach(activity => {
+                const li = document.createElement("li");
+                li.textContent = `${activity.text} - Data de entrega: ${activity.dueDate}`;
+                activityList.appendChild(li);
+            });
+        }
+
+        function formatDate(dateString) {
+            const [year, month, day] = dateString.split("-");
+            return `${day}/${month}/${year}`;
+        }
+    </script>
 </body>
 </html>
